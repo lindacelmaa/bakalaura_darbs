@@ -1,2 +1,5 @@
 pdf2image
 Pillow
+pytesseract
+torch
+transformers

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from ocr.pdf_loader import PDFLoader
 from ocr.text_localizer import TextLocalizer
+from ocr.image_preprocessor import ImagePreprocessor
 
 
 class AnalyseText:
@@ -12,8 +13,13 @@ class AnalyseText:
         self.pdf_path = Path(self.args.pdf_path)
         self.out_dir = Path(self.args.output_dir)
         self.ocr_engine = self.args.ocr  # tesseract or transformer
+        self.threshold = self.args.threshold
 
         self.pdf_loader = PDFLoader(dpi=300)
+        self.preprocessor = ImagePreprocessor(
+            threshold=self.threshold,
+            save_debug=self.args.save_preprocessed
+        )
         self.localizer = TextLocalizer(lang="lav+eng", ocr_engine=self.ocr_engine)
 
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -30,6 +36,33 @@ class AnalyseText:
             default="tesseract",
             help="OCR engine to use: 'tesseract' (default) or 'transformer' (TrOCR)"
         )
+        parser.add_argument(
+            "--threshold",
+            type=float,
+            default=0.85,
+            help="Grid removal intensity threshold"
+        )
+        parser.add_argument(
+            "--save-preprocessed",
+            action="store_true",
+            help="Save preprocessed images to output/preprocessed"
+        )
+        parser.add_argument(
+            "--pages",
+            type=int,
+            nargs="+",
+            help="Only process specific pages"
+        )
+        parser.add_argument(
+            "--no-ocr",
+            action="store_true",
+            help="Skip OCR, only run preprocessing"
+        )
+        parser.add_argument(
+            "--use-preprocessed",
+            action="store_true",
+            help="Use already preprocessed images from output/preprocessed/ folder"
+        )
         return parser.parse_args()
 
     def run(self):
@@ -41,12 +74,47 @@ class AnalyseText:
         # print(f"{len(images)} pages saved to {self.out_dir / 'images'}")
 
         # Use existing PNG images directly
-        images_dir = self.out_dir / "images"
-        images = sorted(images_dir.glob("*.png"))
-        print(f"Found {len(images)} existing page images in {images_dir}")
+        #images_dir = self.out_dir / "images"
+        #all_images = sorted(images_dir.glob("*.png"))
+        #print(f"Found {len(all_images)} existing page images in {images_dir}")
+
+        if self.args.use_preprocessed:
+            images_dir = self.out_dir / "preprocessed"
+            print(f"Using preprocessed images from {images_dir}")
+        else:
+            images_dir = self.out_dir / "images"
+
+        all_images = sorted(images_dir.glob("*.png"))
+        print(f"Found {len(all_images)} images in {images_dir}")
+
+        if self.args.pages:
+            images = [
+                p for p in all_images
+                if any(p.stem == f"page_{n:04d}" for n in self.args.pages)
+            ]
+            print(f"Filtering to pages: {self.args.pages} → {len(images)} image(s)")
+        else:
+            images = all_images
+
+        # Skip preprocessing if using already preprocessed images
+        if self.args.use_preprocessed:
+            processed_images = images
+        else:
+            print(f"\nPreprocessing images (threshold={self.threshold})...")
+            processed_images = self.preprocessor.process(images, self.out_dir)
+
+        # Skip OCR
+        if self.args.no_ocr:
+            print("\n--no-ocr flag set, skipping OCR. Done!")
+            return
 
         # Text localization
         self.localizer.run(
-            images,
+            processed_images,
             self.out_dir / f"localization_{self.ocr_engine}"
         )
+
+        # Cleanup temp files
+        if not self.args.save_preprocessed:
+            self.preprocessor.cleanup(processed_images)
+            print("\nCleaned up temp files.")

@@ -29,7 +29,8 @@ class ImagePreprocessor:
 
         edges = canny(gray, sigma=2)
 
-        tested_angles = np.linspace(-np.pi / 4, np.pi / 4, 180, endpoint=False)
+        angle_range = np.deg2rad(10)
+        tested_angles = np.linspace(np.pi / 2 - angle_range, np.pi / 2 + angle_range, 100)
         h, theta, d = hough_line(edges, theta=tested_angles)
 
         peaks = hough_line_peaks(h, theta, d, num_peaks=20, threshold=0.3 * h.max())
@@ -69,7 +70,7 @@ class ImagePreprocessor:
 
         median_angle = float(np.median(long_line_angles))
 
-        rotation_angle = -median_angle
+        rotation_angle = median_angle - 90.0
 
         rotation_angle = float(np.clip(rotation_angle, -45, 45))
         print(f"    Deskew: median line angle={median_angle:.2f}°  →  rotating {rotation_angle:.2f}°")

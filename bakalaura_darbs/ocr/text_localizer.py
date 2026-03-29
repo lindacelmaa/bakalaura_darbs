@@ -3,9 +3,10 @@ from PIL import Image, ImageDraw
 
 
 class TextLocalizer:
-    def __init__(self, lang="lav+eng", ocr_engine="tesseract"):
+    def __init__(self, lang="lav+eng", ocr_engine="tesseract", kraken_model=None):
         self.lang = lang
         self.ocr_engine = ocr_engine
+        self.kraken_model = kraken_model
 
     def _get_engine(self):
         if self.ocr_engine == "transformer":

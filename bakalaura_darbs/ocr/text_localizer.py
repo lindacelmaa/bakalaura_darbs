@@ -11,6 +11,11 @@ class TextLocalizer:
         if self.ocr_engine == "transformer":
             from ocr.transformer_ocr_engine import TransformerOCREngine
             return TransformerOCREngine(lang=self.lang)
+        elif self.ocr_engine == "kraken":
+            from ocr.kraken_ocr_engine import KrakenOCREngine
+            if not self.kraken_model:
+                raise ValueError("--kraken-model path is required when using --ocr kraken")
+            return KrakenOCREngine(model_path=self.kraken_model)
         else:
             from ocr.tesseract_ocr_engine import OCREngine
             return OCREngine(lang=self.lang)

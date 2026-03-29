@@ -20,7 +20,7 @@ class AnalyseText:
             threshold=self.threshold,
             save_debug=self.args.save_preprocessed
         )
-        self.localizer = TextLocalizer(lang="lav+eng", ocr_engine=self.ocr_engine)
+        self.localizer = TextLocalizer(lang="lav+eng", ocr_engine=self.ocr_engine, kraken_model=self.args.kraken_model)
 
         self.out_dir.mkdir(parents=True, exist_ok=True)
         (self.out_dir / "images").mkdir(exist_ok=True)
@@ -32,9 +32,9 @@ class AnalyseText:
         parser.add_argument("output_dir", help="Output directory")
         parser.add_argument(
             "--ocr",
-            choices=["tesseract", "transformer"],
+            choices=["tesseract", "transformer", "kraken"],
             default="tesseract",
-            help="OCR engine to use: 'tesseract' (default) or 'transformer' (TrOCR)"
+            help="OCR engine to use: 'tesseract' (default), 'transformer' (TrOCR) or 'kraken' (Kraken)"
         )
         parser.add_argument(
             "--threshold",
@@ -62,6 +62,11 @@ class AnalyseText:
             "--use-preprocessed",
             action="store_true",
             help="Use already preprocessed images from output/preprocessed/ folder"
+        )
+        parser.add_argument(
+            "--kraken-model",
+            default=None,
+            help="Path to .mlmodel file (required when --ocr kraken)"
         )
         return parser.parse_args()
 

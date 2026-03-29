@@ -71,39 +71,25 @@ class AnalyseText:
         return parser.parse_args()
 
     def run(self):
-        # #Load PDF and split into pages
-        # images = self.pdf_loader.load(
-        #     self.pdf_path,
-        #     self.out_dir / "images"
-        # )
-        # print(f"{len(images)} pages saved to {self.out_dir / 'images'}")
-
-        # Use existing PNG images directly
-        #images_dir = self.out_dir / "images"
-        #all_images = sorted(images_dir.glob("*.png"))
-        #print(f"Found {len(all_images)} existing page images in {images_dir}")
-
-        if self.args.use_preprocessed:
-            images_dir = self.out_dir / "preprocessed"
-            print(f"Using preprocessed images from {images_dir}")
-        else:
-            images_dir = self.out_dir / "images"
-
-        all_images = sorted(images_dir.glob("*.png"))
-        print(f"Found {len(all_images)} images in {images_dir}")
+        # Load PDF and split into pages
+        images = self.pdf_loader.load(
+            self.pdf_path,
+            self.out_dir / "images"
+        )
+        print(f"{len(images)} pages saved to {self.out_dir / 'images'}")
 
         if self.args.pages:
             images = [
-                p for p in all_images
-                if any(p.stem == f"page_{n:04d}" for n in self.args.pages)
+                p for p in images
+                if any(p.stem == f"page{n:04d}" for n in self.args.pages)
             ]
             print(f"Filtering to pages: {self.args.pages} → {len(images)} image(s)")
-        else:
-            images = all_images
 
         # Skip preprocessing if using already preprocessed images
         if self.args.use_preprocessed:
-            processed_images = images
+            images_dir = self.out_dir / "preprocessed"
+            processed_images = sorted(images_dir.glob("*.png"))
+            print(f"Using preprocessed images from {images_dir}")
         else:
             print(f"\nPreprocessing images (threshold={self.threshold})...")
             processed_images = self.preprocessor.process(images, self.out_dir)
@@ -116,7 +102,7 @@ class AnalyseText:
         # Text localization
         self.localizer.run(
             processed_images,
-            self.out_dir / f"localization_{self.ocr_engine}"
+            self.out_dir / f"localization{self.ocr_engine}"
         )
 
         # Cleanup temp files

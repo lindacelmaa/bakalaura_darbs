@@ -25,6 +25,21 @@ class KrakenOCREngine:
             image = Image.open(image_path).convert("RGB")
 
             seg = blla.segment(image)
+            print(f"  Segmentation found {len(seg.lines)} lines")
+
+            debug_img = image.copy()
+            draw = ImageDraw.Draw(debug_img)
+            for line in seg.lines:
+                pts = line.baseline
+                if pts:
+                    draw.line(pts, fill="red", width=3)
+                poly = line.boundary
+                if poly:
+                    draw.polygon(poly, outline="blue")
+
+            seg_path = output_dir / f"{image_path.stem}_segmentation.png"
+            debug_img.save(seg_path)
+            print(f"  Saved segmentation: {seg_path}")
 
             words = []
             for record in rpred.rpred(rec_model, image, seg):
@@ -32,14 +47,12 @@ class KrakenOCREngine:
                 if not text:
                     continue
 
-                if record.line:
-                    xs = [p[0] for p in record.line]
-                    ys = [p[1] for p in record.line]
-                    x, y = int(min(xs)), int(min(ys))
-                    w = int(max(xs) - min(xs))
-                    h = max(int(max(ys) - min(ys)), 20)
-                else:
-                    x, y, w, h = 0, 0, 0, 20
+                try:
+                    x, y, w, h = record.bbox
+                    w = w - x
+                    h = h - y
+                except Exception:
+                    x, y, w, h = 0, 0, 100, 20
 
                 words.append({
                     "text": text,

@@ -1,6 +1,7 @@
 from pathlib import Path
 from pdf2image import convert_from_path
 
+POPPLER_PATH = r"C:\Users\linda\poppler-25.12.0\Library\bin"
 
 class PDFLoader:
     def __init__(self, dpi=300):
@@ -8,7 +9,7 @@ class PDFLoader:
 
     def load(self, pdf_path: Path, output_dir: Path) -> list[Path]:
         print(f"Loading PDF: {pdf_path}")
-        pages = convert_from_path(pdf_path, dpi=self.dpi)
+        pages = convert_from_path(pdf_path, dpi=self.dpi, poppler_path=POPPLER_PATH)
 
         image_paths = []
         for i, page in enumerate(pages, start=1):

@@ -1,4 +1,7 @@
+import json
 from pathlib import Path
+
+import numpy as np
 from PIL import Image, ImageDraw
 
 
@@ -21,6 +24,50 @@ class TextLocalizer:
             from ocr.tesseract_ocr_engine import OCREngine
             return OCREngine(lang=self.lang)
 
+    def _extract_objects_as_arrays(self, image_path: Path, words: list[dict], min_width: int = 0, min_height: int = 0) -> list[np.ndarray]:
+
+        image = Image.open(image_path).convert("RGB")
+        image_np = np.array(image)
+
+        objects = []
+
+        for word in words:
+            x, y = word["left"], word["top"]
+            w, h = word["width"], word["height"]
+
+            if w < min_width or h < min_height:
+                continue
+
+
+            cropped = image_np[y:y + h, x:x + w]
+
+            objects.append({
+                "image": cropped,
+                "bbox": (x, y, w, h),
+                "text": word["text"]
+            })
+
+        return objects
+
+    def _save_objects(self, objects, output_dir: Path, prefix: str):
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        metadata = []
+
+        for i, obj in enumerate(objects):
+            img = Image.fromarray(obj["image"])
+            filename = f"{prefix}_obj_{i:03d}.png"
+            img.save(output_dir / filename)
+
+            metadata.append({
+                "file": filename,
+                "bbox": obj["bbox"],
+                "text": obj["text"]
+            })
+
+        with open(output_dir / f"{prefix}_meta.json", "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+
     def run(self, image_paths: list[Path], output_dir: Path) -> dict[Path, list[dict]]:
         engine = self._get_engine()
 
@@ -28,6 +75,9 @@ class TextLocalizer:
         ocr_results = engine.run(image_paths, output_dir)
 
         output_dir.mkdir(parents=True, exist_ok=True)
+
+        objects_dir = output_dir / "objects"
+        all_objects = {}
 
         for image_path, words in ocr_results.items():
             print(f"  - {image_path.name}")
@@ -44,6 +94,18 @@ class TextLocalizer:
             annotated_path = output_dir / f"{image_path.stem}_localized.png"
             image.save(annotated_path)
             print(f"Saved image: {annotated_path}")
+
+            objects = self._extract_objects_as_arrays(
+                image_path,
+                words,
+                min_width=20,
+                min_height=10
+            )
+
+            all_objects[image_path] = objects
+            self._save_objects(objects, objects_dir, image_path.stem)
+
+            print(f"Extracted {len(objects)} objects")
 
             text_lines = " ".join(w["text"] for w in words)
             text_path = output_dir / f"{image_path.stem}_text.txt"

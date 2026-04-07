@@ -68,27 +68,37 @@ class AnalyseText:
             default=None,
             help="Path to .mlmodel file (required when --ocr kraken)"
         )
+        parser.add_argument(
+            "--use-pdf",
+            action="store_true",
+            help="Use PDF as input (default behavior)"
+        )
         return parser.parse_args()
 
     def run(self):
         # Load PDF and split into pages
-        images = self.pdf_loader.load(
-            self.pdf_path,
-            self.out_dir / "images"
-        )
-        print(f"{len(images)} pages saved to {self.out_dir / 'images'}")
+        if self.args.use_preprocessed:
+            images_dir = self.out_dir / "preprocessed"
+            images = sorted(images_dir.glob("*.png"))
+            print(f"Using preprocessed images from {images_dir}")
+
+        elif self.args.use_pdf:
+            images = self.pdf_loader.load(
+                self.pdf_path,
+                self.out_dir / "images"
+            )
+            print(f"Loaded images from PDF: {len(images)} pages")
 
         if self.args.pages:
             images = [
                 p for p in images
-                if any(p.stem == f"page{n:04d}" for n in self.args.pages)
+                if any(f"page_{n:04d}_" in p.name for n in self.args.pages)
             ]
             print(f"Filtering to pages: {self.args.pages} → {len(images)} image(s)")
 
         # Skip preprocessing if using already preprocessed images
         if self.args.use_preprocessed:
-            images_dir = self.out_dir / "preprocessed"
-            processed_images = sorted(images_dir.glob("*.png"))
+            processed_images = images
             print(f"Using preprocessed images from {images_dir}")
         else:
             print(f"\nPreprocessing images (threshold={self.threshold})...")

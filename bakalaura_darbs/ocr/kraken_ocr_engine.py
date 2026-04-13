@@ -6,7 +6,7 @@ from kraken.lib import models
 
 
 class KrakenOCREngine:
-    def __init__(self, model_path: str):
+    def init(self, model_path: str):
         self.model_path = model_path
         self._model = None
 
@@ -26,7 +26,6 @@ class KrakenOCREngine:
 
             seg = blla.segment(image)
             print(f"  Segmentation found {len(seg.lines)} lines")
-
             debug_img = image.copy()
             draw = ImageDraw.Draw(debug_img)
             for line in seg.lines:
@@ -42,17 +41,27 @@ class KrakenOCREngine:
             print(f"  Saved segmentation: {seg_path}")
 
             words = []
-            for record in rpred.rpred(rec_model, image, seg):
+            for record, line in zip(rpred.rpred(rec_model, image, seg), seg.lines):
                 text = record.prediction.strip()
                 if not text:
                     continue
 
-                try:
-                    x, y, w, h = record.bbox
-                    w = w - x
-                    h = h - y
-                except Exception:
-                    x, y, w, h = 0, 0, 100, 20
+                if line.boundary:
+                    xs = [p[0] for p in line.boundary]
+                    ys = [p[1] for p in line.boundary]
+                    x = int(min(xs))
+                    y = int(min(ys))
+                    w = int(max(xs) - min(xs))
+                    h = int(max(ys) - min(ys))
+                elif line.baseline:
+                    xs = [p[0] for p in line.baseline]
+                    ys = [p[1] for p in line.baseline]
+                    x = int(min(xs))
+                    y = int(min(ys))
+                    w = int(max(xs) - min(xs))
+                    h = max(int(max(ys) - min(ys)), 40)
+                else:
+                    x, y, w, h = 0, 0, 100, 40
 
                 words.append({
                     "text": text,

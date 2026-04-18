@@ -8,7 +8,7 @@ class PDFLoader:
         self.dpi = dpi
 
     def load(self, pdf_path: Path, output_dir: Path) -> list[Path]:
-        print(f"Loading PDF: {pdf_path}")
+        print(f"    Loading PDF: {pdf_path}")
         pages = convert_from_path(pdf_path, dpi=self.dpi, poppler_path=POPPLER_PATH)
 
         image_paths = []
@@ -16,6 +16,6 @@ class PDFLoader:
             path = output_dir / f"page_{i:04d}.png"
             page.save(path, "PNG")
             image_paths.append(path)
-            print(f"Saved page {i}/{len(pages)} -> {path.name}")
+            print(f"    Saved page {i}/{len(pages)} -> {path.name}")
 
         return image_paths

@@ -1,6 +1,11 @@
 from pathlib import Path
 from PIL import Image
 
+"""
+https://learnopencv.com/trocr-getting-started-with-transformer-based-ocr/
+https://huggingface.co/microsoft/trocr-base-handwritten
+https://huggingface.co/docs/transformers/model_doc/trocr
+"""
 
 class TransformerOCREngine:
     def __init__(self, lang="lav+eng"):
@@ -9,12 +14,12 @@ class TransformerOCREngine:
 
     def _load_model(self):
         from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-        print("Loading TrOCR model...")
+        print("     Loading TrOCR model...")
         self.processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
         self.model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
         self.model = self.model.to("cpu")
         self.model.eval()
-        print("TrOCR model loaded.")
+        print("     TrOCR model loaded.")
 
     def _get_word_boxes(self, image: Image.Image) -> list[dict]:
         import pytesseract
@@ -57,11 +62,11 @@ class TransformerOCREngine:
     def run(self, image_paths: list[Path], output_dir: Path) -> dict[Path, list[dict]]:
         results = {}
         for image_path in image_paths:
-            print(f"TrOCR processing: {image_path.name}")
+            print(f"    TrOCR processing: {image_path.name}")
             image = Image.open(image_path).convert("RGB")
             words = self._get_word_boxes(image)
             results[image_path] = words
-            print(f"Found {len(words)} words")
+            print(f"    Found {len(words)} words")
 
-        print("TrOCR ready")
+        print("     TrOCR ready")
         return results

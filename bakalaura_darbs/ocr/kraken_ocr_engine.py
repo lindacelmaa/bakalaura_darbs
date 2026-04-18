@@ -4,6 +4,9 @@ from PIL import Image, ImageDraw
 from kraken import blla, rpred
 from kraken.lib import models
 
+"""
+https://github.com/mittagessen/kraken/tree/main
+"""
 
 class KrakenOCREngine:
     def init(self, model_path: str):
@@ -12,7 +15,7 @@ class KrakenOCREngine:
 
     def _load_model(self):
         if self._model is None:
-            print(f"  Loading Kraken model: {self.model_path}")
+            print(f"    Loading Kraken model: {self.model_path}")
             self._model = models.load_any(self.model_path)
         return self._model
 
@@ -21,11 +24,11 @@ class KrakenOCREngine:
         results = {}
 
         for image_path in image_paths:
-            print(f"  OCR processing: {image_path.name}")
+            print(f"    OCR processing: {image_path.name}")
             image = Image.open(image_path).convert("RGB")
 
             seg = blla.segment(image)
-            print(f"  Segmentation found {len(seg.lines)} lines")
+            print(f"    Segmentation found {len(seg.lines)} lines")
             debug_img = image.copy()
             draw = ImageDraw.Draw(debug_img)
             for line in seg.lines:
@@ -38,7 +41,7 @@ class KrakenOCREngine:
 
             seg_path = output_dir / f"{image_path.stem}_segmentation.png"
             debug_img.save(seg_path)
-            print(f"  Saved segmentation: {seg_path}")
+            print(f"    Saved segmentation: {seg_path}")
 
             words = []
             for record, line in zip(rpred.rpred(rec_model, image, seg), seg.lines):
@@ -73,7 +76,7 @@ class KrakenOCREngine:
                 })
 
             results[image_path] = words
-            print(f"  Found {len(words)} lines")
+            print(f"    Found {len(words)} lines")
 
-        print("OCR ready")
+        print("     OCR ready")
         return results

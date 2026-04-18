@@ -5,6 +5,9 @@ import pytesseract
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
+"""
+https://www.nutrient.io/blog/how-to-use-tesseract-ocr-in-python/
+"""
 
 class OCREngine:
     def __init__(self, lang="lav+eng"):
@@ -14,7 +17,7 @@ class OCREngine:
 
         results = {}
         for image_path in image_paths:
-            print(f"  OCR processing: {image_path.name}")
+            print(f"    OCR processing: {image_path.name}")
             image = Image.open(image_path)
 
             data = pytesseract.image_to_data(
@@ -37,7 +40,7 @@ class OCREngine:
                     })
 
             results[image_path] = words
-            print(f"Found {len(words)} words")
+            print(f"    Found {len(words)} words")
 
-        print("OCR ready")
+        print("     OCR ready")
         return results

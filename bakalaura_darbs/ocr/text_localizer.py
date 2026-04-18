@@ -71,7 +71,7 @@ class TextLocalizer:
     def run(self, image_paths: list[Path], output_dir: Path) -> dict[Path, list[dict]]:
         engine = self._get_engine()
 
-        print(f"{len(image_paths)} images ready for localization ({self.ocr_engine})")
+        print(f"    {len(image_paths)} images ready for localization ({self.ocr_engine})")
         ocr_results = engine.run(image_paths, output_dir)
 
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -93,7 +93,7 @@ class TextLocalizer:
 
             annotated_path = output_dir / f"{image_path.stem}_localized.png"
             image.save(annotated_path)
-            print(f"Saved image: {annotated_path}")
+            print(f"    Saved image: {annotated_path}")
 
             objects = self._extract_objects_as_arrays(
                 image_path,
@@ -105,12 +105,12 @@ class TextLocalizer:
             all_objects[image_path] = objects
             self._save_objects(objects, objects_dir, image_path.stem)
 
-            print(f"Extracted {len(objects)} objects")
+            print(f"    Extracted {len(objects)} objects")
 
             text_lines = " ".join(w["text"] for w in words)
             text_path = output_dir / f"{image_path.stem}_text.txt"
             text_path.write_text(text_lines, encoding="utf-8")
-            print(f"Saved text: {text_path}")
-            print(f"Preview: {text_lines[:200]}")
+            print(f"    Saved text: {text_path}")
+            print(f"    Preview: {text_lines[:200]}")
 
         return ocr_results

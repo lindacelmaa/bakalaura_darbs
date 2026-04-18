@@ -7,6 +7,14 @@ from skimage.morphology import remove_small_objects
 from skimage.transform import hough_line, hough_line_peaks, rotate
 from skimage.feature import canny
 
+"""
+https://scikit-image.org/docs/stable/auto_examples/edges/plot_line_hough_transform.html
+https://scikit-image.org/docs/stable/api/skimage.transform.html#skimage.transform.rotate
+https://scikit-image.org/docs/stable/api/skimage.morphology.html#skimage.morphology.remove_small_holes
+https://scikit-image.org/docs/stable/api/skimage.color.html#skimage.color.rgb2gray
+https://stackoverflow.com/questions/47864265/how-would-i-detect-the-angle-of-these-two-lines
+https://github.com/stephanefschwarz/Hough-Transform/blob/master/HoughTransform.ipynb
+"""
 
 class ImagePreprocessor:
     def __init__(self, threshold=0.8, save_debug=False, min_object_size=50,
@@ -73,7 +81,7 @@ class ImagePreprocessor:
         rotation_angle = median_angle - 90.0
 
         rotation_angle = float(np.clip(rotation_angle, -45, 45))
-        print(f"    Deskew: median line angle={median_angle:.2f}°  →  rotating {rotation_angle:.2f}°")
+        print(f"    Deskew: median line angle = {median_angle:.2f}°  →  rotating {rotation_angle:.2f}°")
         return rotation_angle
 
     def _deskew(self, bw_uint8: np.ndarray, gray: np.ndarray) -> np.ndarray:
@@ -99,7 +107,7 @@ class ImagePreprocessor:
         processed_paths = []
 
         for image_path in image_paths:
-            print(f"  Preprocessing: {image_path.name}")
+            print(f"    Preprocessing: {image_path.name}")
 
             image = Image.open(image_path).convert("RGB")
             gray = rgb2gray(np.array(image))
@@ -107,7 +115,7 @@ class ImagePreprocessor:
             bw = (gray > self.threshold).astype(np.uint8) * 255
 
             bw = self._remove_noise(bw)
-            print(f"    Noise removal done (min_size={self.min_object_size}px)")
+            print(f"    Noise removal done (min_size = {self.min_object_size}px)")
 
             if self.deskew:
                 bw = self._deskew(bw, gray)

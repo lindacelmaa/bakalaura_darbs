@@ -80,33 +80,33 @@ class AnalyseText:
         if self.args.use_preprocessed:
             images_dir = self.out_dir / "preprocessed"
             images = sorted(images_dir.glob("*.png"))
-            print(f"Using preprocessed images from {images_dir}")
+            print(f"    Using preprocessed images from {images_dir}")
 
         elif self.args.use_pdf:
             images = self.pdf_loader.load(
                 self.pdf_path,
                 self.out_dir / "images"
             )
-            print(f"Loaded images from PDF: {len(images)} pages")
+            print(f"    Loaded images from PDF: {len(images)} pages")
 
         if self.args.pages:
             images = [
                 p for p in images
                 if any(f"page_{n:04d}_" in p.name for n in self.args.pages)
             ]
-            print(f"Filtering to pages: {self.args.pages} → {len(images)} image(s)")
+            print(f"    Filtering to pages: {self.args.pages} → {len(images)} image(s)")
 
         # Skip preprocessing if using already preprocessed images
         if self.args.use_preprocessed:
             processed_images = images
-            print(f"Using preprocessed images from {images_dir}")
+            print(f"    Using preprocessed images from {images_dir}")
         else:
-            print(f"\nPreprocessing images (threshold={self.threshold})...")
+            print(f"    \nPreprocessing images (threshold={self.threshold})...")
             processed_images = self.preprocessor.process(images, self.out_dir)
 
         # Skip OCR
         if self.args.no_ocr:
-            print("\n--no-ocr flag set, skipping OCR. Done!")
+            print("     \n--no-ocr flag set, skipping OCR. Done!")
             return
 
         # Text localization
@@ -118,4 +118,4 @@ class AnalyseText:
         # Cleanup temp files
         if not self.args.save_preprocessed:
             self.preprocessor.cleanup(processed_images)
-            print("\nCleaned up temp files.")
+            print("     \nCleaned up temp files.")

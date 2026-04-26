@@ -84,16 +84,16 @@ class ImagePreprocessor:
         print(f"    Deskew: median line angle = {median_angle:.2f}°  →  rotating {rotation_angle:.2f}°")
         return rotation_angle
 
-    def _deskew(self, bw_uint8: np.ndarray, gray: np.ndarray) -> np.ndarray:
+    def _deskew(self, image: np.ndarray, gray: np.ndarray, cval=1.0) -> np.ndarray:
         angle = self._detect_skew_angle(gray)
         if abs(angle) < 0.1:
-            return bw_uint8
+            return image
 
         rotated = rotate(
-            bw_uint8.astype(np.float32) / 255.0,
+            image.astype(np.float32) / 255.0,
             angle=angle,
             resize=False,
-            cval=1.0,
+            cval=cval,
             preserve_range=True,
         )
         return (rotated * 255).astype(np.uint8)
@@ -118,7 +118,12 @@ class ImagePreprocessor:
             print(f"    Noise removal done (min_size = {self.min_object_size}px)")
 
             if self.deskew:
-                bw = self._deskew(bw, gray)
+                bw = self._deskew(bw, gray, cval=1.0)
+                gray_uint8 = (gray * 255).astype(np.uint8)
+                gray_uint8 = self._deskew(gray_uint8, gray, cval=255)
+
+            else:
+                gray_uint8 = (gray * 255).astype(np.uint8)
 
             result = Image.fromarray(bw).convert("RGB")
 
@@ -130,6 +135,14 @@ class ImagePreprocessor:
             result.save(save_path)
             processed_paths.append(save_path)
             print(f"    Saved → {save_path}")
+
+            result_gray = Image.fromarray(gray_uint8).convert("RGB")
+            if self.save_debug:
+                gray_path = debug_dir / f"{image_path.stem}_gray.png"
+            else:
+                gray_path = image_path.parent / f"{image_path.stem}_gray.png"
+            result_gray.save(gray_path)
+            print(f"    Saved gray → {gray_path}")
 
         return processed_paths
 

@@ -26,7 +26,12 @@ class TextLocalizer:
 
     def _extract_objects_as_arrays(self, image_path: Path, words: list[dict], min_width: int = 0, min_height: int = 0) -> list[np.ndarray]:
 
-        image = Image.open(image_path).convert("RGB")
+        gray_path = image_path.parent / image_path.name.replace("_preprocessed", "_gray")
+
+        if gray_path.exists():
+            image = Image.open(gray_path).convert("RGB")
+        else:
+            image = Image.open(image_path).convert("RGB")
         image_np = np.array(image)
 
         objects = []
